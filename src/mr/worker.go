@@ -1,6 +1,7 @@
 package mr
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -47,7 +48,26 @@ func Worker(
 	file.Close()
 	kva := mapf(filename, string(content))
 
-	log.Println(kva)
+	writeOutput(kva)
+}
+
+func writeOutput(pairs []KeyValue) {
+	fo, err := os.Create("output.txt")
+	if err != nil {
+		panic(err)
+	}
+
+	enc := json.NewEncoder(fo)
+	for _, kv := range pairs {
+		enc.Encode(&kv)
+	}
+
+	// close fo on exit and check for its returned error
+	defer func() {
+		if err := fo.Close(); err != nil {
+			panic(err)
+		}
+	}()
 }
 
 // JobRequestCall

@@ -25,10 +25,8 @@ type Job struct {
 	Status JobStatus
 }
 
-// Your code here -- RPC handlers for the worker to call.
-
 // HandleJobRequest
-// an example RPC handler.
+// an RPC handler for job requests from workers
 //
 // the RPC argument and reply types are defined in rpc.go.
 //
