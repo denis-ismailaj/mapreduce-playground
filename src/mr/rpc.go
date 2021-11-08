@@ -20,6 +20,7 @@ type JobRequestArgs struct {
 
 type JobRequestReply struct {
 	Filename string
+	NrReduce int
 }
 
 // Add your RPC definitions here.

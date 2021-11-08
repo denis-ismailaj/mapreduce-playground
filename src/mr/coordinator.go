@@ -9,7 +9,8 @@ import "net/rpc"
 import "net/http"
 
 type Coordinator struct {
-	Jobs []Job
+	Jobs    []Job
+	nReduce int
 }
 
 type JobStatus int64
@@ -31,6 +32,8 @@ type Job struct {
 // the RPC argument and reply types are defined in rpc.go.
 //
 func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestReply) error {
+	reply.NrReduce = c.nReduce
+
 	// pay attention to potential race condition
 	for i, job := range c.Jobs {
 		if job.Status == Unprocessed {
@@ -81,7 +84,7 @@ func (c *Coordinator) Done() bool {
 // nReduce is the number of reduce tasks to use.
 //
 func MakeCoordinator(files []string, nReduce int) *Coordinator {
-	c := Coordinator{}
+	c := Coordinator{nReduce: nReduce}
 
 	for _, file := range files {
 		c.Jobs = append(c.Jobs, Job{Status: Unprocessed, File: file})

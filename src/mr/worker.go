@@ -28,6 +28,10 @@ func ihash(key string) int {
 	return int(h.Sum32() & 0x7fffffff)
 }
 
+func getReduceTaskNr(key string, nReduce int) int {
+	return ihash(key) % nReduce
+}
+
 // Worker
 // main/mrworker.go calls this function.
 //
@@ -35,7 +39,7 @@ func Worker(
 	mapf func(string, string) []KeyValue,
 	reducef func(string, []string) string,
 ) {
-	filename := JobRequestCall()
+	filename, nReduce := JobRequestCall()
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -48,26 +52,28 @@ func Worker(
 	file.Close()
 	kva := mapf(filename, string(content))
 
-	writeOutput(kva)
+	writeOutput(kva, nReduce)
 }
 
-func writeOutput(pairs []KeyValue) {
-	fo, err := os.Create("output.txt")
-	if err != nil {
-		panic(err)
-	}
-
-	enc := json.NewEncoder(fo)
+func writeOutput(pairs []KeyValue, nReduce int) {
 	for _, kv := range pairs {
-		enc.Encode(&kv)
-	}
 
-	// close fo on exit and check for its returned error
-	defer func() {
+		reduceTaskNr := getReduceTaskNr(kv.Key, nReduce)
+		filename := fmt.Sprintf("mr-420-%d.txt", reduceTaskNr)
+
+		fo, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			panic(err)
+		}
+
+		enc := json.NewEncoder(fo)
+
+		enc.Encode(&kv)
+
 		if err := fo.Close(); err != nil {
 			panic(err)
 		}
-	}()
+	}
 }
 
 // JobRequestCall
@@ -75,7 +81,7 @@ func writeOutput(pairs []KeyValue) {
 //
 // the RPC argument and reply types are defined in rpc.go.
 //
-func JobRequestCall() string {
+func JobRequestCall() (string, int) {
 
 	// declare an argument structure.
 	args := JobRequestArgs{}
@@ -89,7 +95,7 @@ func JobRequestCall() string {
 	// send the RPC request, wait for the reply.
 	call("Coordinator.HandleJobRequest", &args, &reply)
 
-	return reply.Filename
+	return reply.Filename, reply.NrReduce
 }
 
 //
