@@ -1,6 +1,10 @@
 package mr
 
-import "fmt"
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+)
 import "log"
 import "net/rpc"
 import "hash/fnv"
@@ -30,15 +34,28 @@ func Worker(
 	mapf func(string, string) []KeyValue,
 	reducef func(string, []string) string,
 ) {
-	CallExample()
+	filename := JobRequestCall()
+
+	file, err := os.Open(filename)
+	if err != nil {
+		log.Fatalf("cannot open %v", filename)
+	}
+	content, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Fatalf("cannot read %v", filename)
+	}
+	file.Close()
+	kva := mapf(filename, string(content))
+
+	log.Println(kva)
 }
 
-// CallExample
-// example function to show how to make an RPC call to the coordinator.
+// JobRequestCall
+// makes an RPC call to the coordinator to get a new job
 //
 // the RPC argument and reply types are defined in rpc.go.
 //
-func CallExample() {
+func JobRequestCall() string {
 
 	// declare an argument structure.
 	args := JobRequestArgs{}
@@ -52,8 +69,7 @@ func CallExample() {
 	// send the RPC request, wait for the reply.
 	call("Coordinator.HandleJobRequest", &args, &reply)
 
-	// reply.Y should be 100.
-	fmt.Printf("reply.Y %v\n", reply.Filename)
+	return reply.Filename
 }
 
 //

@@ -1,16 +1,15 @@
-package main
+package mr
 
 import (
 	"log"
-	"mapreduce/mr"
 	"plugin"
 )
 
-//
+// LoadPlugin
 // load the application Map and Reduce functions
 // from a plugin file, e.g. mapreduce/mrapps/wc.so
 //
-func loadPlugin(filename string) (func(string, string) []mr.KeyValue, func(string, []string) string) {
+func LoadPlugin(filename string) (func(string, string) []KeyValue, func(string, []string) string) {
 	p, err := plugin.Open(filename)
 	if err != nil {
 		log.Fatalf("cannot load plugin %v", filename)
@@ -19,7 +18,7 @@ func loadPlugin(filename string) (func(string, string) []mr.KeyValue, func(strin
 	if err != nil {
 		log.Fatalf("cannot find Map in %v", filename)
 	}
-	mapf := xmapf.(func(string, string) []mr.KeyValue)
+	mapf := xmapf.(func(string, string) []KeyValue)
 	xreducef, err := p.Lookup("Reduce")
 	if err != nil {
 		log.Fatalf("cannot find Reduce in %v", filename)
