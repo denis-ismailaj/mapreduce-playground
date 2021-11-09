@@ -23,6 +23,13 @@ type JobRequestReply struct {
 	NrReduce int
 }
 
+type JobFinishArgs struct {
+	Filename string
+	Outputs  map[int]string
+}
+
+type JobFinishReply struct{}
+
 // Add your RPC definitions here.
 
 // Cook up a unique-ish UNIX-domain socket name

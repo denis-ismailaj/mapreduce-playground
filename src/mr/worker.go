@@ -18,16 +18,15 @@ type KeyValue struct {
 	Value string
 }
 
-//
-// use ihash(key) % NReduce to choose the reduce
-// task number for each KeyValue emitted by Map.
-//
 func ihash(key string) int {
 	h := fnv.New32a()
 	h.Write([]byte(key))
 	return int(h.Sum32() & 0x7fffffff)
 }
 
+//
+// Partitioning function for intermediate Outputs
+//
 func getReduceTaskNr(key string, nReduce int) int {
 	return ihash(key) % nReduce
 }
@@ -52,10 +51,14 @@ func Worker(
 	file.Close()
 	kva := mapf(filename, string(content))
 
-	writeOutput(kva, nReduce)
+	outputs := writeOutput(kva, nReduce)
+
+	JobFinishCall(filename, outputs)
 }
 
-func writeOutput(pairs []KeyValue, nReduce int) {
+func writeOutput(pairs []KeyValue, nReduce int) map[int]string {
+	var outputs = map[int]string{}
+
 	for _, kv := range pairs {
 
 		reduceTaskNr := getReduceTaskNr(kv.Key, nReduce)
@@ -73,7 +76,11 @@ func writeOutput(pairs []KeyValue, nReduce int) {
 		if err := fo.Close(); err != nil {
 			panic(err)
 		}
+
+		outputs[reduceTaskNr] = filename
 	}
+
+	return outputs
 }
 
 // JobRequestCall
@@ -96,6 +103,20 @@ func JobRequestCall() (string, int) {
 	call("Coordinator.HandleJobRequest", &args, &reply)
 
 	return reply.Filename, reply.NrReduce
+}
+
+// JobFinishCall
+// makes an RPC call to the coordinator to report that a job finished
+//
+// the RPC argument and reply types are defined in rpc.go.
+//
+func JobFinishCall(filename string, outputs map[int]string) {
+
+	// declare an argument structure.
+	args := JobFinishArgs{Outputs: outputs, Filename: filename}
+
+	// send the RPC request, wait for the reply.
+	call("Coordinator.HandleJobFinish", &args, JobFinishReply{})
 }
 
 //

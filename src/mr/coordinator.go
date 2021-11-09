@@ -9,8 +9,9 @@ import "net/rpc"
 import "net/http"
 
 type Coordinator struct {
-	Jobs    []Job
-	nReduce int
+	nReduce    int
+	mapJobs    []MapJob
+	reduceJobs []ReduceJob
 }
 
 type JobStatus int64
@@ -21,9 +22,14 @@ const (
 	Done
 )
 
-type Job struct {
-	File   string
-	Status JobStatus
+type MapJob struct {
+	inputPath string
+	status    JobStatus
+}
+
+type ReduceJob struct {
+	taskNumber int
+	status     JobStatus
 }
 
 // HandleJobRequest
@@ -35,15 +41,26 @@ func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestRe
 	reply.NrReduce = c.nReduce
 
 	// pay attention to potential race condition
-	for i, job := range c.Jobs {
-		if job.Status == Unprocessed {
-			c.Jobs[i].Status = Processing
-			reply.Filename = job.File
+	for i, job := range c.mapJobs {
+		if job.status == Unprocessed {
+			c.mapJobs[i].status = Processing
+			reply.Filename = job.inputPath
 			return nil
 		}
 	}
 
 	reply.Filename = ""
+
+	return nil
+}
+
+// HandleJobFinish
+// an RPC handler for job finish reports from workers
+//
+// the RPC argument and reply types are defined in rpc.go.
+//
+func (c *Coordinator) HandleJobFinish(args *JobFinishArgs, reply *JobFinishReply) error {
+	log.Println(args.Outputs)
 
 	return nil
 }
@@ -69,8 +86,18 @@ func (c *Coordinator) server() {
 // if the entire job has finished.
 //
 func (c *Coordinator) Done() bool {
-	for _, job := range c.Jobs {
-		if job.Status != Processing {
+	for _, job := range c.mapJobs {
+		if job.status != Done {
+			return false
+		}
+	}
+
+	if len(c.reduceJobs) < c.nReduce {
+		return false
+	}
+
+	for _, job := range c.reduceJobs {
+		if job.status != Done {
 			return false
 		}
 	}
@@ -87,7 +114,7 @@ func MakeCoordinator(files []string, nReduce int) *Coordinator {
 	c := Coordinator{nReduce: nReduce}
 
 	for _, file := range files {
-		c.Jobs = append(c.Jobs, Job{Status: Unprocessed, File: file})
+		c.mapJobs = append(c.mapJobs, MapJob{status: Unprocessed, inputPath: file})
 	}
 
 	c.server()
