@@ -21,6 +21,7 @@ type JobRequestArgs struct {
 type JobRequestReply struct {
 	Filename string
 	NrReduce int
+	JobId    int
 }
 
 type JobFinishArgs struct {

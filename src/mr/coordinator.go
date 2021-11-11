@@ -9,9 +9,10 @@ import "net/rpc"
 import "net/http"
 
 type Coordinator struct {
-	nReduce    int
-	mapJobs    []MapJob
-	reduceJobs []ReduceJob
+	nReduce      int
+	mapJobs      []MapJob
+	reduceJobs   []ReduceJob
+	lastMapJobId int
 }
 
 type JobStatus int64
@@ -30,6 +31,7 @@ type MapJob struct {
 type ReduceJob struct {
 	taskNumber int
 	status     JobStatus
+	inputs     []string
 }
 
 // HandleJobRequest
@@ -45,6 +47,8 @@ func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestRe
 		if job.status == Unprocessed {
 			c.mapJobs[i].status = Processing
 			reply.Filename = job.inputPath
+			reply.JobId = c.lastMapJobId
+			c.lastMapJobId = c.lastMapJobId + 1
 			return nil
 		}
 	}
@@ -60,7 +64,11 @@ func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestRe
 // the RPC argument and reply types are defined in rpc.go.
 //
 func (c *Coordinator) HandleJobFinish(args *JobFinishArgs, reply *JobFinishReply) error {
-	log.Println(args.Outputs)
+	for i, output := range args.Outputs {
+		c.reduceJobs[i] = ReduceJob{status: Unprocessed, inputs: append(c.reduceJobs[i].inputs, output)}
+	}
+
+	log.Println(c.reduceJobs)
 
 	return nil
 }
@@ -111,10 +119,14 @@ func (c *Coordinator) Done() bool {
 // nReduce is the number of reduce tasks to use.
 //
 func MakeCoordinator(files []string, nReduce int) *Coordinator {
-	c := Coordinator{nReduce: nReduce}
+	c := Coordinator{nReduce: nReduce, lastMapJobId: 0}
 
 	for _, file := range files {
 		c.mapJobs = append(c.mapJobs, MapJob{status: Unprocessed, inputPath: file})
+	}
+
+	for i := 0; i < nReduce; i++ {
+		c.reduceJobs = append(c.reduceJobs, ReduceJob{status: Unprocessed, taskNumber: i})
 	}
 
 	c.server()
