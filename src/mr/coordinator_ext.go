@@ -6,7 +6,7 @@ package mr
 //
 func (c *Coordinator) Done() bool {
 	for _, job := range c.mapJobs {
-		if job.status != Done {
+		if job.Status != Done {
 			return false
 		}
 	}
@@ -16,7 +16,7 @@ func (c *Coordinator) Done() bool {
 	}
 
 	for _, job := range c.reduceJobs {
-		if job.status != Done {
+		if job.Status != Done {
 			return false
 		}
 	}

@@ -17,11 +17,24 @@ func MakeCoordinator(files []string, nReduce int) *Coordinator {
 	c := Coordinator{nReduce: nReduce, lastMapJobId: 0}
 
 	for _, file := range files {
-		c.mapJobs = append(c.mapJobs, MapJob{status: Unprocessed, inputPath: file})
+		job := Job{
+			Id:     c.lastMapJobId,
+			Status: Unprocessed,
+			Inputs: []string{file},
+			Type:   Map,
+		}
+		c.mapJobs = append(c.mapJobs, job)
+
+		c.lastMapJobId = c.lastMapJobId + 1
 	}
 
 	for i := 0; i < nReduce; i++ {
-		c.reduceJobs = append(c.reduceJobs, ReduceJob{status: Unprocessed, taskNumber: i})
+		job := Job{
+			Status: Unprocessed,
+			Id:     i,
+			Type:   Reduce,
+		}
+		c.reduceJobs = append(c.reduceJobs, job)
 	}
 
 	c.server()

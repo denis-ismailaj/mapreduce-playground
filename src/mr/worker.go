@@ -13,7 +13,12 @@ func Worker(
 	mapf func(string, string) []KeyValue,
 	reducef func(string, []string) string,
 ) {
-	filename, nReduce, jobId := JobRequestCall()
+	job, nReduce := JobRequestCall()
+
+	log.Println(job)
+
+	// for map there's only one input
+	filename := job.Inputs[0]
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -26,7 +31,7 @@ func Worker(
 	file.Close()
 	kva := mapf(filename, string(content))
 
-	outputs := writeOutput(kva, nReduce, jobId)
+	outputs := writeOutput(kva, nReduce, job.Id)
 
 	JobFinishCall(filename, outputs)
 }
@@ -36,7 +41,7 @@ func Worker(
 //
 // the RPC argument and reply types are defined in rpc.go.
 //
-func JobRequestCall() (string, int, int) {
+func JobRequestCall() (Job, int) {
 
 	// declare an argument structure.
 	args := JobRequestArgs{}
@@ -50,7 +55,7 @@ func JobRequestCall() (string, int, int) {
 	// send the RPC request, wait for the reply.
 	call("Coordinator.HandleJobRequest", &args, &reply)
 
-	return reply.Filename, reply.NrReduce, reply.JobId
+	return reply.Job, reply.NrReduce
 }
 
 // JobFinishCall

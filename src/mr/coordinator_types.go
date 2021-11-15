@@ -2,8 +2,8 @@ package mr
 
 type Coordinator struct {
 	nReduce      int
-	mapJobs      []MapJob
-	reduceJobs   []ReduceJob
+	mapJobs      []Job
+	reduceJobs   []Job
 	lastMapJobId int
 }
 
@@ -15,13 +15,16 @@ const (
 	Done
 )
 
-type MapJob struct {
-	inputPath string
-	status    JobStatus
-}
+type JobType int64
 
-type ReduceJob struct {
-	taskNumber int
-	status     JobStatus
-	inputs     []string
+const (
+	Map JobType = iota
+	Reduce
+)
+
+type Job struct {
+	Id     int
+	Status JobStatus
+	Inputs []string
+	Type   JobType
 }
