@@ -11,7 +11,6 @@ func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestRe
 
 	reply.NrReduce = c.nReduce
 
-	// pay attention to potential race condition
 	for i, job := range c.mapJobs {
 		if job.Status == Unprocessed {
 			c.mapJobs[i].Status = Processing

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"reflect"
 	"sort"
 )
 
@@ -18,6 +19,11 @@ func Worker(
 ) {
 	job, nReduce := JobRequestCall()
 
+	if reflect.ValueOf(job).IsZero() {
+		// No jobs left to do
+		os.Exit(0)
+	}
+
 	switch job.Type {
 	case Map:
 		kva := RunMap(mapFun, job)
@@ -28,6 +34,9 @@ func Worker(
 	case Reduce:
 		RunReduce(reduceFun, job)
 	}
+
+	// It finished so go get another job
+	Worker(mapFun, reduceFun)
 }
 
 func RunMap(
