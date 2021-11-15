@@ -23,6 +23,14 @@ func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestRe
 	}
 
 	// if we're here it means map jobs have finished
+	for i, job := range c.reduceJobs {
+		if job.Status == Unprocessed {
+			c.reduceJobs[i].Status = Processing
+			reply.Job = c.reduceJobs[i]
+
+			return nil
+		}
+	}
 
 	return nil
 }
@@ -34,7 +42,12 @@ func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestRe
 //
 func (c *Coordinator) HandleJobFinish(args *JobFinishArgs, reply *JobFinishReply) error {
 	for i, output := range args.Outputs {
-		c.reduceJobs[i] = Job{Id: i, Status: Unprocessed, Inputs: append(c.reduceJobs[i].Inputs, output)}
+		c.reduceJobs[i] = Job{
+			Type:   Reduce,
+			Id:     i,
+			Status: Unprocessed,
+			Inputs: append(c.reduceJobs[i].Inputs, output),
+		}
 	}
 
 	log.Println(c.reduceJobs)
