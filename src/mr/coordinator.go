@@ -1,15 +1,14 @@
 package mr
 
-import (
-	"log"
-)
-
 // HandleJobRequest
 // an RPC handler for job requests from workers
 //
 // the RPC argument and reply types are defined in rpc.go.
 //
 func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestReply) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	reply.NrReduce = c.nReduce
 
 	// pay attention to potential race condition
@@ -41,6 +40,9 @@ func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestRe
 // the RPC argument and reply types are defined in rpc.go.
 //
 func (c *Coordinator) HandleJobFinish(args *JobFinishArgs, reply *JobFinishReply) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	for i, output := range args.Outputs {
 		c.reduceJobs[i] = Job{
 			Type:   Reduce,
@@ -49,8 +51,6 @@ func (c *Coordinator) HandleJobFinish(args *JobFinishArgs, reply *JobFinishReply
 			Inputs: append(c.reduceJobs[i].Inputs, output),
 		}
 	}
-
-	log.Println(c.reduceJobs)
 
 	return nil
 }

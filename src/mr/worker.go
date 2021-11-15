@@ -18,8 +18,6 @@ func Worker(
 ) {
 	job, nReduce := JobRequestCall()
 
-	log.Println(job)
-
 	switch job.Type {
 	case Map:
 		kva := RunMap(mapFun, job)
@@ -140,5 +138,5 @@ func JobFinishCall(filename string, outputs map[int]string) {
 	args := JobFinishArgs{Outputs: outputs, Filename: filename}
 
 	// send the RPC request, wait for the reply.
-	call("Coordinator.HandleJobFinish", &args, JobFinishReply{})
+	call("Coordinator.HandleJobFinish", &args, &JobFinishReply{})
 }

@@ -1,10 +1,13 @@
 package mr
 
+import "sync"
+
 type Coordinator struct {
 	nReduce      int
 	mapJobs      []Job
 	reduceJobs   []Job
 	lastMapJobId int
+	mu           sync.Mutex
 }
 
 type JobStatus int64
