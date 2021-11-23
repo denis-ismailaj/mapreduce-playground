@@ -20,9 +20,9 @@ func JobRequestCall() (Job, int) {
 //
 // the RPC argument and reply types are defined in rpc.go.
 //
-func JobFinishCall(filename string, outputs map[int]string) {
+func JobFinishCall(job Job, outputs map[int]string) {
 	// declare an argument structure.
-	args := JobFinishArgs{Outputs: outputs, Filename: filename}
+	args := JobFinishArgs{Outputs: outputs, Job: job}
 
 	// send the RPC request, wait for the reply.
 	call("Coordinator.HandleJobFinish", &args, &JobFinishReply{})

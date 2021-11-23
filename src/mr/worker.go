@@ -25,9 +25,11 @@ func Worker(
 
 		outputs := writeOutput(kva, nReduce, job.Id)
 
-		JobFinishCall(job.Inputs[0], outputs)
+		JobFinishCall(job, outputs)
 	case Reduce:
 		RunReduce(reduceFun, job)
+
+		JobFinishCall(job, map[int]string{})
 	}
 
 	// It finished so go get another job

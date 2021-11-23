@@ -14,10 +14,6 @@ func (c *Coordinator) Done() bool {
 		}
 	}
 
-	if len(c.reduceJobs) < c.nReduce {
-		return false
-	}
-
 	for _, job := range c.reduceJobs {
 		if job.Status != Done {
 			return false

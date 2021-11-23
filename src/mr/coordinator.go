@@ -42,13 +42,20 @@ func (c *Coordinator) HandleJobFinish(args *JobFinishArgs, reply *JobFinishReply
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	for i, output := range args.Outputs {
-		c.reduceJobs[i] = Job{
-			Type:   Reduce,
-			Id:     i,
-			Status: Unprocessed,
-			Inputs: append(c.reduceJobs[i].Inputs, output),
+	switch args.Job.Type {
+	case Map:
+		c.mapJobs[args.Job.Id].Status = Done
+
+		for i, output := range args.Outputs {
+			c.reduceJobs[i] = Job{
+				Type:   Reduce,
+				Id:     i,
+				Status: Unprocessed,
+				Inputs: append(c.reduceJobs[i].Inputs, output),
+			}
 		}
+	case Reduce:
+		c.reduceJobs[args.Job.Id].Status = Done
 	}
 
 	return nil

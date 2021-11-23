@@ -24,8 +24,8 @@ type JobRequestReply struct {
 }
 
 type JobFinishArgs struct {
-	Filename string
-	Outputs  map[int]string
+	Job     Job
+	Outputs map[int]string
 }
 
 type JobFinishReply struct{}
