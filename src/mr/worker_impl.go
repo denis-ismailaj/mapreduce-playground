@@ -56,8 +56,7 @@ func RunReduce(
 
 	sort.Sort(ByKey(kva))
 
-	outputName := fmt.Sprintf("mr-out-%d.txt", job.Id)
-	outputFile, _ := os.Create(outputName)
+	tempFile, _ := ioutil.TempFile("", "temp")
 
 	//
 	// call Reduce on each distinct key in intermediate[],
@@ -76,10 +75,13 @@ func RunReduce(
 		output := f(kva[i].Key, values)
 
 		// this is the correct format for each line of Reduce output.
-		fmt.Fprintf(outputFile, "%v %v\n", kva[i].Key, output)
+		fmt.Fprintf(tempFile, "%v %v\n", kva[i].Key, output)
 
 		i = j
 	}
 
-	outputFile.Close()
+	tempFile.Close()
+
+	outputName := fmt.Sprintf("mr-out-%d.txt", job.Id)
+	os.Rename(tempFile.Name(), outputName)
 }
