@@ -55,6 +55,15 @@ func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestRe
 		}
 	}
 
+	// Check if all reduce jobs are done
+	for _, job := range c.reduceJobs {
+		if job.Status != Done {
+			reply.Job = Job{Type: Wait}
+
+			return nil
+		}
+	}
+
 	return nil
 }
 
