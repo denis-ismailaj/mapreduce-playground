@@ -1,8 +1,8 @@
 package mr
 
 import (
-	"os"
 	"reflect"
+	"time"
 )
 
 // Worker
@@ -12,11 +12,15 @@ func Worker(
 	mapFun func(string, string) []KeyValue,
 	reduceFun func(string, []string) string,
 ) {
+	// Get a new job when finished
+	defer Worker(mapFun, reduceFun)
+
 	job, nReduce := JobRequestCall()
 
 	if reflect.ValueOf(job).IsZero() {
-		// No jobs left to do
-		os.Exit(0)
+		// No available jobs at the moment
+		time.Sleep(1 * time.Second)
+		return
 	}
 
 	switch job.Type {
@@ -31,7 +35,4 @@ func Worker(
 
 		JobFinishCall(job, map[int]string{})
 	}
-
-	// It finished so go get another job
-	Worker(mapFun, reduceFun)
 }
