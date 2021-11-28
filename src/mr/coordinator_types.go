@@ -1,6 +1,9 @@
 package mr
 
-import "sync"
+import (
+	"sync"
+	"time"
+)
 
 type Coordinator struct {
 	nReduce      int
@@ -26,8 +29,15 @@ const (
 )
 
 type Job struct {
-	Id     int
-	Status JobStatus
-	Inputs []string
-	Type   JobType
+	Id               int
+	Status           JobStatus
+	LastStatusUpdate time.Time
+	Inputs           []string
+	Type             JobType
+}
+
+func (job Job) isStale() bool {
+	maxAge := time.Now().Add(-10 * time.Second)
+
+	return job.LastStatusUpdate.Before(maxAge)
 }

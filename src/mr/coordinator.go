@@ -1,5 +1,7 @@
 package mr
 
+import "time"
+
 // HandleJobRequest
 // an RPC handler for job requests from workers
 //
@@ -14,9 +16,16 @@ func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestRe
 	for i, job := range c.mapJobs {
 		if job.Status == Unprocessed {
 			c.mapJobs[i].Status = Processing
+			c.mapJobs[i].LastStatusUpdate = time.Now()
+
 			reply.Job = c.mapJobs[i]
 
 			return nil
+		}
+
+		if job.Status == Processing && job.isStale() {
+			c.mapJobs[i].Status = Unprocessed
+			c.mapJobs[i].LastStatusUpdate = time.Now()
 		}
 	}
 
@@ -24,9 +33,16 @@ func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestRe
 	for i, job := range c.reduceJobs {
 		if job.Status == Unprocessed {
 			c.reduceJobs[i].Status = Processing
+			c.reduceJobs[i].LastStatusUpdate = time.Now()
+
 			reply.Job = c.reduceJobs[i]
 
 			return nil
+		}
+
+		if job.Status == Processing && job.isStale() {
+			c.reduceJobs[i].Status = Unprocessed
+			c.reduceJobs[i].LastStatusUpdate = time.Now()
 		}
 	}
 
@@ -44,18 +60,23 @@ func (c *Coordinator) HandleJobFinish(args *JobFinishArgs, reply *JobFinishReply
 
 	switch args.Job.Type {
 	case Map:
-		c.mapJobs[args.Job.Id].Status = Done
+		if c.mapJobs[args.Job.Id].Status == Done {
+			return nil
+		}
 
 		for i, output := range args.Outputs {
-			c.reduceJobs[i] = Job{
-				Type:   Reduce,
-				Id:     i,
-				Status: Unprocessed,
-				Inputs: append(c.reduceJobs[i].Inputs, output),
-			}
+			c.reduceJobs[i].Inputs = append(c.reduceJobs[i].Inputs, output)
 		}
+
+		c.mapJobs[args.Job.Id].Status = Done
+		c.mapJobs[args.Job.Id].LastStatusUpdate = time.Now()
 	case Reduce:
+		if c.reduceJobs[args.Job.Id].Status == Done {
+			return nil
+		}
+
 		c.reduceJobs[args.Job.Id].Status = Done
+		c.reduceJobs[args.Job.Id].LastStatusUpdate = time.Now()
 	}
 
 	return nil

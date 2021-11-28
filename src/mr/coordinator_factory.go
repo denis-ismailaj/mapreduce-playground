@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/rpc"
 	"os"
+	"time"
 )
 
 // MakeCoordinator
@@ -18,10 +19,11 @@ func MakeCoordinator(files []string, nReduce int) *Coordinator {
 
 	for _, file := range files {
 		job := Job{
-			Id:     c.lastMapJobId,
-			Status: Unprocessed,
-			Inputs: []string{file},
-			Type:   Map,
+			Id:               c.lastMapJobId,
+			Status:           Unprocessed,
+			LastStatusUpdate: time.Now(),
+			Inputs:           []string{file},
+			Type:             Map,
 		}
 		c.mapJobs = append(c.mapJobs, job)
 
@@ -30,9 +32,10 @@ func MakeCoordinator(files []string, nReduce int) *Coordinator {
 
 	for i := 0; i < nReduce; i++ {
 		job := Job{
-			Status: Unprocessed,
-			Id:     i,
-			Type:   Reduce,
+			Status:           Unprocessed,
+			LastStatusUpdate: time.Now(),
+			Id:               i,
+			Type:             Reduce,
 		}
 		c.reduceJobs = append(c.reduceJobs, job)
 	}
