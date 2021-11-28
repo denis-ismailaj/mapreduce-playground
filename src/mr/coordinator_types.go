@@ -26,6 +26,7 @@ type JobType int64
 const (
 	Map JobType = iota
 	Reduce
+	Wait
 )
 
 type Job struct {

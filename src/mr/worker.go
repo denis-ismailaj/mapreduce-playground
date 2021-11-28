@@ -1,6 +1,7 @@
 package mr
 
 import (
+	"os"
 	"reflect"
 	"time"
 )
@@ -18,6 +19,11 @@ func Worker(
 	job, nReduce := JobRequestCall()
 
 	if reflect.ValueOf(job).IsZero() {
+		// All jobs are finished
+		os.Exit(0)
+	}
+
+	if job.Type == Wait {
 		// No available jobs at the moment
 		time.Sleep(1 * time.Second)
 		return

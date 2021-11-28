@@ -32,6 +32,8 @@ func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestRe
 	// Check if all map jobs are done
 	for _, job := range c.mapJobs {
 		if job.Status != Done {
+			reply.Job = Job{Type: Wait}
+
 			return nil
 		}
 	}
