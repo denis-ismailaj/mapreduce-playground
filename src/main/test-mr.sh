@@ -110,7 +110,7 @@ sleep 1
 timeout -k 2s 180s ../mrworker ../../mrapps/mtiming.so &
 timeout -k 2s 180s ../mrworker ../../mrapps/mtiming.so
 
-NT=`cat mr-out* | grep '^times-' | wc -l | sed 's/ //g'`
+NT=$(cat mr-out* | grep -c '^times-' | sed 's/ //g')
 if [ "$NT" != "2" ]
 then
   echo '---' saw "$NT" workers rather than 2
@@ -141,7 +141,7 @@ sleep 1
 timeout -k 2s 180s ../mrworker ../../mrapps/rtiming.so &
 timeout -k 2s 180s ../mrworker ../../mrapps/rtiming.so
 
-NT=`cat mr-out* | grep '^[a-z] 2' | wc -l | sed 's/ //g'`
+NT=$(cat mr-out* | grep -c '^[a-z] 2' | sed 's/ //g')
 if [ "$NT" -lt "2" ]
 then
   echo '---' too few parallel reduces.
@@ -166,7 +166,7 @@ timeout -k 2s 180s ../mrworker ../../mrapps/jobcount.so
 timeout -k 2s 180s ../mrworker ../../mrapps/jobcount.so &
 timeout -k 2s 180s ../mrworker ../../mrapps/jobcount.so
 
-NT=`cat mr-out* | awk '{print $2}'`
+NT=$(cat mr-out* | awk '{print $2}')
 if [ "$NT" -ne "8" ]
 then
   echo '---' map jobs ran incorrect number of times "($NT != 8)"
@@ -195,7 +195,7 @@ timeout -k 2s 180s ../mrworker ../../mrapps/early_exit.so &
 timeout -k 2s 180s ../mrworker ../../mrapps/early_exit.so &
 timeout -k 2s 180s ../mrworker ../../mrapps/early_exit.so &
 
-# wait for any of the coord or workers to exit
+# wait for any of the coordinator or workers to exit
 # `jobs` ensures that any completed old processes from other tests
 # are not waited upon
 jobs &> /dev/null
@@ -236,21 +236,21 @@ sleep 1
 timeout -k 2s 180s ../mrworker ../../mrapps/crash.so &
 
 # mimic rpc.go's coordinatorSock()
-SOCKNAME=/var/tmp/824-mr-`id -u`
+SOCK_NAME=/var/tmp/824-mr-$(id -u)
 
-( while [ -e $SOCKNAME -a ! -f mr-done ]
+( while [ -e "$SOCK_NAME" ] && [ ! -f mr-done ]
   do
     timeout -k 2s 180s ../mrworker ../../mrapps/crash.so
     sleep 1
   done ) &
 
-( while [ -e $SOCKNAME -a ! -f mr-done ]
+( while [ -e "$SOCK_NAME" ] && [ ! -f mr-done ]
   do
     timeout -k 2s 180s ../mrworker ../../mrapps/crash.so
     sleep 1
   done ) &
 
-while [ -e $SOCKNAME -a ! -f mr-done ]
+while [ -e "$SOCK_NAME" ] && [ ! -f mr-done ]
 do
   timeout -k 2s 180s ../mrworker ../../mrapps/crash.so
   sleep 1
@@ -258,7 +258,7 @@ done
 
 wait
 
-rm $SOCKNAME
+rm "$SOCK_NAME"
 sort mr-out* | grep . > mr-crash-all
 if cmp mr-crash-all mr-correct-crash.txt
 then

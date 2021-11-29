@@ -12,12 +12,12 @@ trap 'kill -INT -$pid; exit 1' INT
 runs=$1
 chmod +x test-mr.sh
 
-for i in $(seq 1 $runs); do
+for i in $(seq 1 "$runs"); do
     timeout -k 2s 900s ./test-mr.sh &
     pid=$!
     if ! wait $pid; then
-        echo '***' FAILED TESTS IN TRIAL $i
+        echo '***' FAILED TESTS IN TRIAL "$i"
         exit 1
     fi
 done
-echo '***' PASSED ALL $i TESTING TRIALS
+echo '***' PASSED ALL "$i" TESTING TRIALS
