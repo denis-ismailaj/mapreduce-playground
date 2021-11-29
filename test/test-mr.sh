@@ -9,6 +9,11 @@
 # comment this to run the tests without the Go race detector.
 RACE=-race
 
+MR_APPS_DIR=mrapps
+COORDINATOR=../cmd/coordinator/main.go
+WORKER=../cmd/worker/main.go
+SEQUENTIAL=./mrsequential.go
+
 # run the test in a fresh sub-directory.
 rm -rf mr-tmp
 mkdir mr-tmp || exit 1
@@ -16,17 +21,17 @@ cd mr-tmp || exit 1
 rm -f mr-*
 
 # make sure software is freshly built.
-(cd ../../mrapps && go build $RACE -buildmode=plugin wc.go) || exit 1
-(cd ../../mrapps && go build $RACE -buildmode=plugin indexer.go) || exit 1
-(cd ../../mrapps && go build $RACE -buildmode=plugin mtiming.go) || exit 1
-(cd ../../mrapps && go build $RACE -buildmode=plugin rtiming.go) || exit 1
-(cd ../../mrapps && go build $RACE -buildmode=plugin jobcount.go) || exit 1
-(cd ../../mrapps && go build $RACE -buildmode=plugin early_exit.go) || exit 1
-(cd ../../mrapps && go build $RACE -buildmode=plugin crash.go) || exit 1
-(cd ../../mrapps && go build $RACE -buildmode=plugin nocrash.go) || exit 1
-(cd .. && go build $RACE mrcoordinator.go) || exit 1
-(cd .. && go build $RACE mrworker.go) || exit 1
-(cd .. && go build $RACE mrsequential.go) || exit 1
+(cd $MR_APPS_DIR && go build $RACE -buildmode=plugin wc.go) || exit 1
+(cd $MR_APPS_DIR && go build $RACE -buildmode=plugin indexer.go) || exit 1
+(cd $MR_APPS_DIR && go build $RACE -buildmode=plugin mtiming.go) || exit 1
+(cd $MR_APPS_DIR && go build $RACE -buildmode=plugin rtiming.go) || exit 1
+(cd $MR_APPS_DIR && go build $RACE -buildmode=plugin jobcount.go) || exit 1
+(cd $MR_APPS_DIR && go build $RACE -buildmode=plugin early_exit.go) || exit 1
+(cd $MR_APPS_DIR && go build $RACE -buildmode=plugin crash.go) || exit 1
+(cd $MR_APPS_DIR && go build $RACE -buildmode=plugin nocrash.go) || exit 1
+(cd .. && go build $RACE $COORDINATOR) || exit 1
+(cd .. && go build $RACE $WORKER) || exit 1
+(cd .. && go build $RACE $SEQUENTIAL) || exit 1
 
 failed_any=0
 
@@ -34,7 +39,7 @@ failed_any=0
 # first word-count
 
 # generate the correct output
-../mrsequential ../../mrapps/wc.so ../pg*txt || exit 1
+../mrsequential $MR_APPS_DIR/wc.so ../pg*txt || exit 1
 sort mr-out-0 > mr-correct-wc.txt
 rm -f mr-out*
 
@@ -47,9 +52,9 @@ pid=$!
 sleep 1
 
 # start multiple workers.
-timeout -k 2s 180s ../mrworker ../../mrapps/wc.so &
-timeout -k 2s 180s ../mrworker ../../mrapps/wc.so &
-timeout -k 2s 180s ../mrworker ../../mrapps/wc.so &
+timeout -k 2s 180s ../mrworker $MR_APPS_DIR/wc.so &
+timeout -k 2s 180s ../mrworker $MR_APPS_DIR/wc.so &
+timeout -k 2s 180s ../mrworker $MR_APPS_DIR/wc.so &
 
 # wait for the coordinator to exit.
 wait $pid
@@ -74,7 +79,7 @@ wait
 rm -f mr-*
 
 # generate the correct output
-../mrsequential ../../mrapps/indexer.so ../pg*txt || exit 1
+../mrsequential $MR_APPS_DIR/indexer.so ../pg*txt || exit 1
 sort mr-out-0 > mr-correct-indexer.txt
 rm -f mr-out*
 
@@ -84,8 +89,8 @@ timeout -k 2s 180s ../mrcoordinator ../pg*txt &
 sleep 1
 
 # start multiple workers
-timeout -k 2s 180s ../mrworker ../../mrapps/indexer.so &
-timeout -k 2s 180s ../mrworker ../../mrapps/indexer.so
+timeout -k 2s 180s ../mrworker $MR_APPS_DIR/indexer.so &
+timeout -k 2s 180s ../mrworker $MR_APPS_DIR/indexer.so
 
 sort mr-out* | grep . > mr-indexer-all
 if cmp mr-indexer-all mr-correct-indexer.txt
@@ -107,8 +112,8 @@ rm -f mr-*
 timeout -k 2s 180s ../mrcoordinator ../pg*txt &
 sleep 1
 
-timeout -k 2s 180s ../mrworker ../../mrapps/mtiming.so &
-timeout -k 2s 180s ../mrworker ../../mrapps/mtiming.so
+timeout -k 2s 180s ../mrworker $MR_APPS_DIR/mtiming.so &
+timeout -k 2s 180s ../mrworker $MR_APPS_DIR/mtiming.so
 
 NT=$(cat mr-out* | grep -c '^times-' | sed 's/ //g')
 if [ "$NT" != "2" ]
@@ -138,8 +143,8 @@ rm -f mr-*
 timeout -k 2s 180s ../mrcoordinator ../pg*txt &
 sleep 1
 
-timeout -k 2s 180s ../mrworker ../../mrapps/rtiming.so &
-timeout -k 2s 180s ../mrworker ../../mrapps/rtiming.so
+timeout -k 2s 180s ../mrworker $MR_APPS_DIR/rtiming.so &
+timeout -k 2s 180s ../mrworker $MR_APPS_DIR/rtiming.so
 
 NT=$(cat mr-out* | grep -c '^[a-z] 2' | sed 's/ //g')
 if [ "$NT" -lt "2" ]
@@ -161,10 +166,10 @@ rm -f mr-*
 timeout -k 2s 180s ../mrcoordinator ../pg*txt &
 sleep 1
 
-timeout -k 2s 180s ../mrworker ../../mrapps/jobcount.so &
-timeout -k 2s 180s ../mrworker ../../mrapps/jobcount.so
-timeout -k 2s 180s ../mrworker ../../mrapps/jobcount.so &
-timeout -k 2s 180s ../mrworker ../../mrapps/jobcount.so
+timeout -k 2s 180s ../mrworker $MR_APPS_DIR/jobcount.so &
+timeout -k 2s 180s ../mrworker $MR_APPS_DIR/jobcount.so
+timeout -k 2s 180s ../mrworker $MR_APPS_DIR/jobcount.so &
+timeout -k 2s 180s ../mrworker $MR_APPS_DIR/jobcount.so
 
 NT=$(cat mr-out* | awk '{print $2}')
 if [ "$NT" -ne "8" ]
@@ -191,9 +196,9 @@ timeout -k 2s 180s ../mrcoordinator ../pg*txt &
 sleep 1
 
 # start multiple workers.
-timeout -k 2s 180s ../mrworker ../../mrapps/early_exit.so &
-timeout -k 2s 180s ../mrworker ../../mrapps/early_exit.so &
-timeout -k 2s 180s ../mrworker ../../mrapps/early_exit.so &
+timeout -k 2s 180s ../mrworker $MR_APPS_DIR/early_exit.so &
+timeout -k 2s 180s ../mrworker $MR_APPS_DIR/early_exit.so &
+timeout -k 2s 180s ../mrworker $MR_APPS_DIR/early_exit.so &
 
 # wait for any of the coordinator or workers to exit
 # `jobs` ensures that any completed old processes from other tests
@@ -224,7 +229,7 @@ rm -f mr-*
 echo '***' Starting crash test.
 
 # generate the correct output
-../mrsequential ../../mrapps/nocrash.so ../pg*txt || exit 1
+../mrsequential $MR_APPS_DIR/nocrash.so ../pg*txt || exit 1
 sort mr-out-0 > mr-correct-crash.txt
 rm -f mr-out*
 
@@ -233,26 +238,26 @@ rm -f mr-done
 sleep 1
 
 # start multiple workers
-timeout -k 2s 180s ../mrworker ../../mrapps/crash.so &
+timeout -k 2s 180s ../mrworker $MR_APPS_DIR/crash.so &
 
 # mimic rpc.go's coordinatorSock()
 SOCK_NAME=/var/tmp/824-mr-$(id -u)
 
 ( while [ -e "$SOCK_NAME" ] && [ ! -f mr-done ]
   do
-    timeout -k 2s 180s ../mrworker ../../mrapps/crash.so
+    timeout -k 2s 180s ../mrworker $MR_APPS_DIR/crash.so
     sleep 1
   done ) &
 
 ( while [ -e "$SOCK_NAME" ] && [ ! -f mr-done ]
   do
-    timeout -k 2s 180s ../mrworker ../../mrapps/crash.so
+    timeout -k 2s 180s ../mrworker $MR_APPS_DIR/crash.so
     sleep 1
   done ) &
 
 while [ -e "$SOCK_NAME" ] && [ ! -f mr-done ]
 do
-  timeout -k 2s 180s ../mrworker ../../mrapps/crash.so
+  timeout -k 2s 180s ../mrworker $MR_APPS_DIR/crash.so
   sleep 1
 done
 

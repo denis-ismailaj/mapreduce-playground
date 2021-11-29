@@ -2,15 +2,15 @@ package main
 
 //
 // start a worker process, which is implemented
-// in mapreduce/mr/worker.go. typically there will be
+// in mapreduce/mr/main.go. Typically, there will be
 // multiple worker processes, talking to one coordinator.
 //
-// go run mrworker.go wc.so
+// go run main.go wc.so
 //
 // Please do not change this file.
 //
 
-import "mapreduce/mr"
+import "mapreduce/internal"
 import "os"
 import "fmt"
 
@@ -20,7 +20,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	mapf, reducef := mr.LoadPlugin(os.Args[1])
+	mapf, reducef := internal.LoadPlugin(os.Args[1])
 
-	mr.Worker(mapf, reducef)
+	internal.Worker(mapf, reducef)
 }

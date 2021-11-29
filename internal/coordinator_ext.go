@@ -1,7 +1,9 @@
-package mr
+package internal
+
+import "mapreduce/pkg"
 
 // Done
-// main/mrcoordinator.go calls Done() periodically to find out
+// main/main.go calls Done() periodically to find out
 // if the entire job has finished.
 //
 func (c *Coordinator) Done() bool {
@@ -9,13 +11,13 @@ func (c *Coordinator) Done() bool {
 	defer c.mu.Unlock()
 
 	for _, job := range c.mapJobs {
-		if job.Status != Done {
+		if job.Status != pkg.Done {
 			return false
 		}
 	}
 
 	for _, job := range c.reduceJobs {
-		if job.Status != Done {
+		if job.Status != pkg.Done {
 			return false
 		}
 	}

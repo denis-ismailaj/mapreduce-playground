@@ -4,9 +4,9 @@ FROM golang:1.17.3-bullseye
 
 WORKDIR /app
 
-COPY src/. ./
+COPY . ./
 
-WORKDIR /app/main
+WORKDIR /app/test/
 
 RUN chmod +x test-mr.sh
 

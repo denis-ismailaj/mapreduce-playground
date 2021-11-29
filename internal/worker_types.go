@@ -1,4 +1,4 @@
-package mr
+package internal
 
 // KeyValue
 // Map functions return a slice of KeyValue.

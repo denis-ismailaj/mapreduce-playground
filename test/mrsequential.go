@@ -7,7 +7,7 @@ package main
 //
 
 import "fmt"
-import "mapreduce/mr"
+import "mapreduce/internal"
 import "os"
 import "log"
 import "io/ioutil"
@@ -19,14 +19,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	mapf, reducef := mr.LoadPlugin(os.Args[1])
+	mapf, reducef := internal.LoadPlugin(os.Args[1])
 
 	//
 	// read each input file,
 	// pass it to Map,
 	// accumulate the intermediate Map output.
 	//
-	intermediate := []mr.KeyValue{}
+	intermediate := []internal.KeyValue{}
 	for _, filename := range os.Args[2:] {
 		file, err := os.Open(filename)
 		if err != nil {
@@ -47,7 +47,7 @@ func main() {
 	// rather than being partitioned into NxM buckets.
 	//
 
-	sort.Sort(mr.ByKey(intermediate))
+	sort.Sort(internal.ByKey(intermediate))
 
 	oname := "mr-out-0"
 	ofile, _ := os.Create(oname)

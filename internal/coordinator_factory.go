@@ -1,7 +1,8 @@
-package mr
+package internal
 
 import (
 	"log"
+	"mapreduce/pkg"
 	"net"
 	"net/http"
 	"net/rpc"
@@ -11,19 +12,19 @@ import (
 
 // MakeCoordinator
 // create a Coordinator.
-// main/mrcoordinator.go calls this function.
+// main/main.go calls this function.
 // nReduce is the number of reduce tasks to use.
 //
 func MakeCoordinator(files []string, nReduce int) *Coordinator {
 	c := Coordinator{nReduce: nReduce, lastMapJobId: 0}
 
 	for _, file := range files {
-		job := Job{
+		job := pkg.Job{
 			Id:               c.lastMapJobId,
-			Status:           Unprocessed,
+			Status:           pkg.Unprocessed,
 			LastStatusUpdate: time.Now(),
 			Inputs:           []string{file},
-			Type:             Map,
+			Type:             pkg.Map,
 		}
 		c.mapJobs = append(c.mapJobs, job)
 
@@ -31,11 +32,11 @@ func MakeCoordinator(files []string, nReduce int) *Coordinator {
 	}
 
 	for i := 0; i < nReduce; i++ {
-		job := Job{
-			Status:           Unprocessed,
+		job := pkg.Job{
+			Status:           pkg.Unprocessed,
 			LastStatusUpdate: time.Now(),
 			Id:               i,
-			Type:             Reduce,
+			Type:             pkg.Reduce,
 		}
 		c.reduceJobs = append(c.reduceJobs, job)
 	}
@@ -45,7 +46,7 @@ func MakeCoordinator(files []string, nReduce int) *Coordinator {
 }
 
 //
-// start a thread that listens for RPCs from worker.go
+// start a thread that listens for RPCs from main.go
 //
 func (c *Coordinator) server() {
 	rpc.Register(c)

@@ -2,14 +2,14 @@ package main
 
 //
 // start the coordinator process, which is implemented
-// in mapreduce/mr/coordinator.go
+// in mapreduce/mr/main.go
 //
-// go run mrcoordinator.go pg*.txt
+// go run main.go pg*.txt
 //
 // Please do not change this file.
 //
 
-import "mapreduce/mr"
+import "mapreduce/internal"
 import "time"
 import "os"
 import "fmt"
@@ -20,7 +20,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	m := mr.MakeCoordinator(os.Args[1:], 10)
+	m := internal.MakeCoordinator(os.Args[1:], 10)
 	for m.Done() == false {
 		time.Sleep(time.Second)
 	}

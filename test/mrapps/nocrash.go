@@ -6,7 +6,7 @@ package main
 // go build -buildmode=plugin nocrash.go
 //
 
-import "mapreduce/mr"
+import "mapreduce/internal"
 import crand "crypto/rand"
 import "math/big"
 import "strings"
@@ -23,14 +23,14 @@ func maybeCrash() {
 	}
 }
 
-func Map(filename string, contents string) []mr.KeyValue {
+func Map(filename string, contents string) []internal.KeyValue {
 	maybeCrash()
 
-	kva := []mr.KeyValue{}
-	kva = append(kva, mr.KeyValue{"a", filename})
-	kva = append(kva, mr.KeyValue{"b", strconv.Itoa(len(filename))})
-	kva = append(kva, mr.KeyValue{"c", strconv.Itoa(len(contents))})
-	kva = append(kva, mr.KeyValue{"d", "xyzzy"})
+	kva := []internal.KeyValue{}
+	kva = append(kva, internal.KeyValue{"a", filename})
+	kva = append(kva, internal.KeyValue{"b", strconv.Itoa(len(filename))})
+	kva = append(kva, internal.KeyValue{"c", strconv.Itoa(len(contents))})
+	kva = append(kva, internal.KeyValue{"d", "xyzzy"})
 	return kva
 }
 

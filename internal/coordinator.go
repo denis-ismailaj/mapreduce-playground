@@ -1,21 +1,25 @@
-package mr
+package internal
 
-import "time"
+import (
+	"mapreduce/api"
+	"mapreduce/pkg"
+	"time"
+)
 
 // HandleJobRequest
 // an RPC handler for job requests from workers
 //
 // the RPC argument and reply types are defined in rpc.go.
 //
-func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestReply) error {
+func (c *Coordinator) HandleJobRequest(args *api.JobRequestArgs, reply *api.JobRequestReply) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	reply.NrReduce = c.nReduce
 
 	for i, job := range c.mapJobs {
-		if job.Status == Unprocessed {
-			c.mapJobs[i].Status = Processing
+		if job.Status == pkg.Unprocessed {
+			c.mapJobs[i].Status = pkg.Processing
 			c.mapJobs[i].LastStatusUpdate = time.Now()
 
 			reply.Job = c.mapJobs[i]
@@ -23,16 +27,16 @@ func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestRe
 			return nil
 		}
 
-		if job.Status == Processing && job.isStale() {
-			c.mapJobs[i].Status = Unprocessed
+		if job.Status == pkg.Processing && job.IsStale() {
+			c.mapJobs[i].Status = pkg.Unprocessed
 			c.mapJobs[i].LastStatusUpdate = time.Now()
 		}
 	}
 
 	// Check if all map jobs are done
 	for _, job := range c.mapJobs {
-		if job.Status != Done {
-			reply.Job = Job{Type: Wait}
+		if job.Status != pkg.Done {
+			reply.Job = pkg.Job{Type: pkg.Wait}
 
 			return nil
 		}
@@ -40,8 +44,8 @@ func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestRe
 
 	// if we're here it means map jobs have finished
 	for i, job := range c.reduceJobs {
-		if job.Status == Unprocessed {
-			c.reduceJobs[i].Status = Processing
+		if job.Status == pkg.Unprocessed {
+			c.reduceJobs[i].Status = pkg.Processing
 			c.reduceJobs[i].LastStatusUpdate = time.Now()
 
 			reply.Job = c.reduceJobs[i]
@@ -49,16 +53,16 @@ func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestRe
 			return nil
 		}
 
-		if job.Status == Processing && job.isStale() {
-			c.reduceJobs[i].Status = Unprocessed
+		if job.Status == pkg.Processing && job.IsStale() {
+			c.reduceJobs[i].Status = pkg.Unprocessed
 			c.reduceJobs[i].LastStatusUpdate = time.Now()
 		}
 	}
 
 	// Check if all reduce jobs are done
 	for _, job := range c.reduceJobs {
-		if job.Status != Done {
-			reply.Job = Job{Type: Wait}
+		if job.Status != pkg.Done {
+			reply.Job = pkg.Job{Type: pkg.Wait}
 
 			return nil
 		}
@@ -72,13 +76,13 @@ func (c *Coordinator) HandleJobRequest(args *JobRequestArgs, reply *JobRequestRe
 //
 // the RPC argument and reply types are defined in rpc.go.
 //
-func (c *Coordinator) HandleJobFinish(args *JobFinishArgs, reply *JobFinishReply) error {
+func (c *Coordinator) HandleJobFinish(args *api.JobFinishArgs, reply *api.JobFinishReply) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	switch args.Job.Type {
-	case Map:
-		if c.mapJobs[args.Job.Id].Status == Done {
+	case pkg.Map:
+		if c.mapJobs[args.Job.Id].Status == pkg.Done {
 			return nil
 		}
 
@@ -86,14 +90,14 @@ func (c *Coordinator) HandleJobFinish(args *JobFinishArgs, reply *JobFinishReply
 			c.reduceJobs[i].Inputs = append(c.reduceJobs[i].Inputs, output)
 		}
 
-		c.mapJobs[args.Job.Id].Status = Done
+		c.mapJobs[args.Job.Id].Status = pkg.Done
 		c.mapJobs[args.Job.Id].LastStatusUpdate = time.Now()
-	case Reduce:
-		if c.reduceJobs[args.Job.Id].Status == Done {
+	case pkg.Reduce:
+		if c.reduceJobs[args.Job.Id].Status == pkg.Done {
 			return nil
 		}
 
-		c.reduceJobs[args.Job.Id].Status = Done
+		c.reduceJobs[args.Job.Id].Status = pkg.Done
 		c.reduceJobs[args.Job.Id].LastStatusUpdate = time.Now()
 	}
 

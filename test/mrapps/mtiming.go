@@ -2,16 +2,18 @@ package main
 
 //
 // a MapReduce pseudo-application to test that workers
-// execute reduce tasks in parallel.
+// execute map tasks in parallel.
 //
-// go build -buildmode=plugin rtiming.go
+// go build -buildmode=plugin mtiming.go
 //
 
-import "mapreduce/mr"
+import "mapreduce/internal"
+import "strings"
 import "fmt"
 import "os"
 import "syscall"
 import "time"
+import "sort"
 import "io/ioutil"
 
 func nparallel(phase string) int {
@@ -59,26 +61,31 @@ func nparallel(phase string) int {
 	return ret
 }
 
-func Map(filename string, contents string) []mr.KeyValue {
+func Map(filename string, contents string) []internal.KeyValue {
+	t0 := time.Now()
+	ts := float64(t0.Unix()) + (float64(t0.Nanosecond()) / 1000000000.0)
+	pid := os.Getpid()
 
-	kva := []mr.KeyValue{}
-	kva = append(kva, mr.KeyValue{"a", "1"})
-	kva = append(kva, mr.KeyValue{"b", "1"})
-	kva = append(kva, mr.KeyValue{"c", "1"})
-	kva = append(kva, mr.KeyValue{"d", "1"})
-	kva = append(kva, mr.KeyValue{"e", "1"})
-	kva = append(kva, mr.KeyValue{"f", "1"})
-	kva = append(kva, mr.KeyValue{"g", "1"})
-	kva = append(kva, mr.KeyValue{"h", "1"})
-	kva = append(kva, mr.KeyValue{"i", "1"})
-	kva = append(kva, mr.KeyValue{"j", "1"})
+	n := nparallel("map")
+
+	kva := []internal.KeyValue{}
+	kva = append(kva, internal.KeyValue{
+		fmt.Sprintf("times-%v", pid),
+		fmt.Sprintf("%.1f", ts)})
+	kva = append(kva, internal.KeyValue{
+		fmt.Sprintf("parallel-%v", pid),
+		fmt.Sprintf("%d", n)})
 	return kva
 }
 
 func Reduce(key string, values []string) string {
-	n := nparallel("reduce")
+	//n := nparallel("reduce")
 
-	val := fmt.Sprintf("%d", n)
+	// sort values to ensure deterministic output.
+	vv := make([]string, len(values))
+	copy(vv, values)
+	sort.Strings(vv)
 
+	val := strings.Join(vv, " ")
 	return val
 }

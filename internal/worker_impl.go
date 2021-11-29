@@ -1,17 +1,18 @@
-package mr
+package internal
 
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"mapreduce/pkg"
 	"os"
 	"sort"
 )
 
 func RunMap(
 	f func(string, string) []KeyValue,
-	job Job,
+	job pkg.Job,
 ) []KeyValue {
 	// for map there's only one input
 	filename := job.Inputs[0]
@@ -32,7 +33,7 @@ func RunMap(
 
 func RunReduce(
 	f func(string, []string) string,
-	job Job,
+	job pkg.Job,
 ) {
 	var kva []KeyValue
 

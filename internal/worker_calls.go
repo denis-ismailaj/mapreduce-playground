@@ -1,13 +1,18 @@
-package mr
+package internal
+
+import (
+	"mapreduce/api"
+	"mapreduce/pkg"
+)
 
 // JobRequestCall
 // makes an RPC call to the coordinator to get a new job
 //
 // the RPC argument and reply types are defined in rpc.go.
 //
-func JobRequestCall() (Job, int) {
+func JobRequestCall() (pkg.Job, int) {
 	// declare a reply structure.
-	reply := JobRequestReply{}
+	reply := api.JobRequestReply{}
 
 	// send the RPC request, wait for the reply.
 	call("Coordinator.HandleJobRequest", struct{}{}, &reply)
@@ -20,10 +25,10 @@ func JobRequestCall() (Job, int) {
 //
 // the RPC argument and reply types are defined in rpc.go.
 //
-func JobFinishCall(job Job, outputs map[int]string) {
+func JobFinishCall(job pkg.Job, outputs map[int]string) {
 	// declare an argument structure.
-	args := JobFinishArgs{Outputs: outputs, Job: job}
+	args := api.JobFinishArgs{Outputs: outputs, Job: job}
 
 	// send the RPC request, wait for the reply.
-	call("Coordinator.HandleJobFinish", &args, &JobFinishReply{})
+	call("Coordinator.HandleJobFinish", &args, &api.JobFinishReply{})
 }

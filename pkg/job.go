@@ -1,17 +1,6 @@
-package mr
+package pkg
 
-import (
-	"sync"
-	"time"
-)
-
-type Coordinator struct {
-	nReduce      int
-	mapJobs      []Job
-	reduceJobs   []Job
-	lastMapJobId int
-	mu           sync.Mutex
-}
+import "time"
 
 type JobStatus int64
 
@@ -37,7 +26,7 @@ type Job struct {
 	Type             JobType
 }
 
-func (job Job) isStale() bool {
+func (job Job) IsStale() bool {
 	maxAge := time.Now().Add(-10 * time.Second)
 
 	return job.LastStatusUpdate.Before(maxAge)
