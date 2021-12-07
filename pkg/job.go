@@ -19,7 +19,7 @@ const (
 )
 
 type Job struct {
-	Id               int
+	Id               string
 	Status           JobStatus
 	LastStatusUpdate time.Time
 	Inputs           []string
@@ -27,6 +27,10 @@ type Job struct {
 }
 
 func (job Job) IsStale() bool {
+	if job.Status != Processing {
+		return false
+	}
+
 	maxAge := time.Now().Add(-10 * time.Second)
 
 	return job.LastStatusUpdate.Before(maxAge)

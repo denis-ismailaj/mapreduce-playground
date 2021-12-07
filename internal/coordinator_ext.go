@@ -10,13 +10,15 @@ func (c *Coordinator) Done() bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	for _, job := range c.mapJobs {
-		if job.Status != pkg.Done {
-			return false
-		}
+	return c.currentStage == Finished
+}
+
+func (c *Coordinator) areCurrentJobsFinished() bool {
+	if len(c.jobs) == 0 {
+		return true
 	}
 
-	for _, job := range c.reduceJobs {
+	for _, job := range c.jobs {
 		if job.Status != pkg.Done {
 			return false
 		}

@@ -56,13 +56,13 @@ func getReduceTaskNr(key string, nReduce int) int {
 	return ihash(key) % nReduce
 }
 
-func writeOutput(pairs []KeyValue, nReduce int, jobId int) map[int]string {
+func writeOutput(pairs []KeyValue, nReduce int, jobId string) map[int]string {
 	var outputs = map[int]string{}
 
 	for _, kv := range pairs {
 
 		reduceTaskNr := getReduceTaskNr(kv.Key, nReduce)
-		filename := fmt.Sprintf("mr-%d-%d.txt", jobId, reduceTaskNr)
+		filename := fmt.Sprintf("mr-%s-%d.txt", jobId, reduceTaskNr)
 
 		fo, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {

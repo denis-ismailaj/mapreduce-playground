@@ -7,8 +7,18 @@ import (
 
 type Coordinator struct {
 	nReduce      int
-	mapJobs      []pkg.Job
-	reduceJobs   []pkg.Job
-	lastMapJobId int
-	mu           sync.Mutex
+	jobs         map[string]*pkg.Job
+	mapOutputs   map[int][]string
+	currentStage Stage
+	mu           *sync.Mutex
+	cond         *sync.Cond
 }
+
+type Stage int64
+
+const (
+	Start Stage = iota
+	Map
+	Reduce
+	Finished
+)

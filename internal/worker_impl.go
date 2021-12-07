@@ -83,6 +83,6 @@ func RunReduce(
 
 	tempFile.Close()
 
-	outputName := fmt.Sprintf("mr-out-%d.txt", job.Id)
+	outputName := fmt.Sprintf("mr-out-%s.txt", job.Id)
 	os.Rename(tempFile.Name(), outputName)
 }

@@ -15,58 +15,21 @@ func (c *Coordinator) HandleJobRequest(args *api.JobRequestArgs, reply *api.JobR
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	reply.NrReduce = c.nReduce
+	// Try to find an unprocessed or stale job to assign to the worker
+	for id, job := range c.jobs {
+		if job.Status == pkg.Unprocessed || job.IsStale() {
+			c.jobs[id].Status = pkg.Processing
+			c.jobs[id].LastStatusUpdate = time.Now()
 
-	for i, job := range c.mapJobs {
-		if job.Status == pkg.Unprocessed {
-			c.mapJobs[i].Status = pkg.Processing
-			c.mapJobs[i].LastStatusUpdate = time.Now()
-
-			reply.Job = c.mapJobs[i]
-
-			return nil
-		}
-
-		if job.Status == pkg.Processing && job.IsStale() {
-			c.mapJobs[i].Status = pkg.Unprocessed
-			c.mapJobs[i].LastStatusUpdate = time.Now()
-		}
-	}
-
-	// Check if all map jobs are done
-	for _, job := range c.mapJobs {
-		if job.Status != pkg.Done {
-			reply.Job = pkg.Job{Type: pkg.Wait}
+			reply.NrReduce = c.nReduce
+			reply.Job = *c.jobs[id]
 
 			return nil
 		}
 	}
 
-	// if we're here it means map jobs have finished
-	for i, job := range c.reduceJobs {
-		if job.Status == pkg.Unprocessed {
-			c.reduceJobs[i].Status = pkg.Processing
-			c.reduceJobs[i].LastStatusUpdate = time.Now()
-
-			reply.Job = c.reduceJobs[i]
-
-			return nil
-		}
-
-		if job.Status == pkg.Processing && job.IsStale() {
-			c.reduceJobs[i].Status = pkg.Unprocessed
-			c.reduceJobs[i].LastStatusUpdate = time.Now()
-		}
-	}
-
-	// Check if all reduce jobs are done
-	for _, job := range c.reduceJobs {
-		if job.Status != pkg.Done {
-			reply.Job = pkg.Job{Type: pkg.Wait}
-
-			return nil
-		}
-	}
+	// Ask worker to check again for open jobs after a while
+	reply.Job = pkg.Job{Type: pkg.Wait}
 
 	return nil
 }
@@ -80,26 +43,24 @@ func (c *Coordinator) HandleJobFinish(args *api.JobFinishArgs, reply *api.JobFin
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	switch args.Job.Type {
-	case pkg.Map:
-		if c.mapJobs[args.Job.Id].Status == pkg.Done {
-			return nil
-		}
-
-		for i, output := range args.Outputs {
-			c.reduceJobs[i].Inputs = append(c.reduceJobs[i].Inputs, output)
-		}
-
-		c.mapJobs[args.Job.Id].Status = pkg.Done
-		c.mapJobs[args.Job.Id].LastStatusUpdate = time.Now()
-	case pkg.Reduce:
-		if c.reduceJobs[args.Job.Id].Status == pkg.Done {
-			return nil
-		}
-
-		c.reduceJobs[args.Job.Id].Status = pkg.Done
-		c.reduceJobs[args.Job.Id].LastStatusUpdate = time.Now()
+	// Dismiss results if the job has already been completed by another worker
+	if c.jobs[args.Job.Id].Status == pkg.Done {
+		return nil
 	}
+
+	// Save intermediate Map output locations
+	if args.Job.Type == pkg.Map {
+		for i, output := range args.Outputs {
+			c.mapOutputs[i] = append(c.mapOutputs[i], output)
+		}
+	}
+
+	// Mark the job as Done
+	c.jobs[args.Job.Id].Status = pkg.Done
+	c.jobs[args.Job.Id].LastStatusUpdate = time.Now()
+
+	// Notify job creator
+	c.cond.Broadcast()
 
 	return nil
 }

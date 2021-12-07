@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/rpc"
 	"os"
-	"time"
+	"sync"
 )
 
 // MakeCoordinator
@@ -15,31 +15,18 @@ import (
 // main/main.go calls this function.
 // nReduce is the number of reduce tasks to use.
 //
-func MakeCoordinator(files []string, nReduce int) *Coordinator {
-	c := Coordinator{nReduce: nReduce, lastMapJobId: 0}
-
-	for _, file := range files {
-		job := pkg.Job{
-			Id:               c.lastMapJobId,
-			Status:           pkg.Unprocessed,
-			LastStatusUpdate: time.Now(),
-			Inputs:           []string{file},
-			Type:             pkg.Map,
-		}
-		c.mapJobs = append(c.mapJobs, job)
-
-		c.lastMapJobId = c.lastMapJobId + 1
+func MakeCoordinator(inputFiles []string, nReduce int) *Coordinator {
+	c := Coordinator{
+		nReduce:      nReduce,
+		mapOutputs:   map[int][]string{},
+		currentStage: Start,
+		jobs:         map[string]*pkg.Job{},
+		mu:           &sync.Mutex{},
 	}
+	c.cond = sync.NewCond(c.mu)
 
-	for i := 0; i < nReduce; i++ {
-		job := pkg.Job{
-			Status:           pkg.Unprocessed,
-			LastStatusUpdate: time.Now(),
-			Id:               i,
-			Type:             pkg.Reduce,
-		}
-		c.reduceJobs = append(c.reduceJobs, job)
-	}
+	// Kick off job creator
+	go c.jobCreator(inputFiles)
 
 	c.server()
 	return &c
