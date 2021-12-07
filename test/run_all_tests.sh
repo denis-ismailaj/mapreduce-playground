@@ -24,17 +24,20 @@ FAILED_ANY=0
 # It expects the test directory as an argument
 function run_test() {
   TEST_IMAGE=$(docker build -q -f "$1"/Dockerfile ..)
-  TEST_RESULT=$(docker run --rm -it "$TEST_IMAGE")
 
-  docker rmi "$TEST_IMAGE"
+  docker run --rm -it "$TEST_IMAGE"
+  TEST_RESULT=$?
 
-  if [ "$TEST_RESULT" -eq 1 ]; then
+  # TODO Add option to not retain test images
+  # docker rmi "$TEST_IMAGE"
+
+  if [ $TEST_RESULT -ne 0 ]; then
     handle_test_failure
   fi
 }
 
 function handle_test_failure() {
-  if [ "$CI_MODE" -eq 0 ]; then
+  if [ $CI_MODE -eq 0 ]; then
     FAILED_ANY=1
   else
     exit 1
@@ -42,7 +45,7 @@ function handle_test_failure() {
 }
 
 echo '***' Building base test image.
-(docker build -t mr-playground-test -f ./Dockerfile ..) || exit 1
+docker build -t mr-playground-test -f ./Dockerfile .. || exit 1
 
 echo '***' Starting test sequence.
 run_test wc
@@ -55,7 +58,7 @@ run_test crash
 
 printf '\n'
 
-if [ "$FAILED_ANY" -eq 0 ]; then
+if [ $FAILED_ANY -eq 0 ]; then
     echo '***' PASSED ALL TESTS
     exit 0
 else

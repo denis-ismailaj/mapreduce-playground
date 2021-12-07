@@ -11,8 +11,6 @@
 
 echo '***' Starting early exit test.
 
-exit 1
-
 timeout -k 2s 180s coordinator "$DATA_DIR"/pg*txt &
 
 # give the coordinator time to create the sockets.
