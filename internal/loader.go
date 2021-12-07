@@ -9,6 +9,7 @@ import (
 // load the application Map and Reduce functions
 // from a plugin file, e.g. mapreduce/mrapps/wc.so
 //
+// TODO Develop a better way of defining and loading user functions
 func LoadPlugin(filename string) (func(string, string) []KeyValue, func(string, []string) string) {
 	p, err := plugin.Open(filename)
 	if err != nil {
