@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/rpc"
 	"os"
-	"strconv"
 )
 
 //
@@ -16,9 +15,7 @@ import (
 // returns false if something goes wrong.
 //
 func call(rpcName string, args interface{}, reply interface{}) bool {
-	// c, err := rpc.DialHTTP("tcp", "127.0.0.1"+":1234")
-	sockName := coordinatorSock()
-	c, err := rpc.DialHTTP("unix", sockName)
+	c, err := rpc.DialHTTP("tcp", "127.0.0.1"+":1234")
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
@@ -31,16 +28,6 @@ func call(rpcName string, args interface{}, reply interface{}) bool {
 
 	fmt.Println(err)
 	return false
-}
-
-// Cook up a unique-ish UNIX-domain socket name
-// in /var/tmp, for the coordinator.
-// Can't use the current directory since
-// Athena AFS doesn't support UNIX-domain sockets.
-func coordinatorSock() string {
-	s := "/var/tmp/824-mr-"
-	s += strconv.Itoa(os.Getuid())
-	return s
 }
 
 func ihash(key string) int {

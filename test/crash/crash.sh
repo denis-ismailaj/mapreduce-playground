@@ -11,43 +11,45 @@ echo '***' Starting crash test.
 
 # generate the correct output
 mrsequential nocrash.so "$DATA_DIR"/pg*txt || exit 1
-sort mr-out-0 > mr-correct-crash.txt
+sort mr-out-0 >mr-correct-crash.txt
 rm -f mr-out*
 
 rm -f mr-done
-(timeout -k 2s 180s coordinator "$DATA_DIR"/pg*txt ; touch mr-done ) &
+(
+  timeout -k 2s 180s coordinator "$DATA_DIR"/pg*txt
+  touch mr-done
+) &
 sleep 1
 
 # start multiple workers
 timeout -k 2s 180s worker crash.so &
 
-# mimic rpc.go's coordinatorSock()
-SOCK_NAME=/var/tmp/824-mr-$(id -u)
+HOST='127.0.0.1'
+PORT='1234'
 
-( while [ -e "$SOCK_NAME" ] && [ ! -f mr-done ]
-  do
-    timeout -k 2s 180s worker crash.so
-    sleep 1
-  done ) &
+function checkc() {
+  nc -v -z $HOST $PORT &>/dev/null
+}
 
-( while [ -e "$SOCK_NAME" ] && [ ! -f mr-done ]
-  do
-    timeout -k 2s 180s worker crash.so
-    sleep 1
-  done ) &
+(while checkc && [ ! -f mr-done ]; do
+  timeout -k 2s 180s worker crash.so
+  sleep 1
+done) &
 
-while [ -e "$SOCK_NAME" ] && [ ! -f mr-done ]
-do
+(while checkc && [ ! -f mr-done ]; do
+  timeout -k 2s 180s worker crash.so
+  sleep 1
+done) &
+
+while checkc && [ ! -f mr-done ]; do
   timeout -k 2s 180s worker crash.so
   sleep 1
 done
 
 wait
 
-rm "$SOCK_NAME"
-sort mr-out* | grep . > mr-crash-all
-if cmp mr-crash-all mr-correct-crash.txt
-then
+sort mr-out* | grep . >mr-crash-all
+if cmp mr-crash-all mr-correct-crash.txt; then
   echo '---' crash test: PASS
   exit 0
 else
