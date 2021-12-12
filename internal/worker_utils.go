@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
-	"log"
 	"net/rpc"
 	"os"
 )
@@ -17,7 +16,7 @@ import (
 func call(rpcName string, args interface{}, reply interface{}) bool {
 	c, err := rpc.DialHTTP("tcp", "127.0.0.1"+":1234")
 	if err != nil {
-		log.Fatal("dialing:", err)
+		return true
 	}
 	defer c.Close()
 
