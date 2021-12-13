@@ -18,11 +18,17 @@ func RunMap(f func(string, string) []KeyValue, job pkg.Job, nReduce int) map[int
 	if err != nil {
 		log.Fatalf("cannot open %v", filename)
 	}
+
 	content, err := ioutil.ReadAll(file)
 	if err != nil {
 		log.Fatalf("cannot read %v", filename)
 	}
-	file.Close()
+
+	err = file.Close()
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
 	kva := f(filename, string(content))
 
 	// Partition and write Map output to nReduce files
@@ -56,7 +62,10 @@ func writeOutput(pairs []KeyValue, nReduce int, jobId string) map[int]string {
 
 		enc := json.NewEncoder(tempFiles[reduceTaskNr])
 
-		enc.Encode(&kv)
+		err := enc.Encode(&kv)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
 	}
 
 	fmt.Printf("Writing final outputs for job %s...\n", jobId)

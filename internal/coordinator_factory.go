@@ -17,7 +17,10 @@ import (
 //
 func MakeCoordinator(inputFiles []string, nReduce int) *Coordinator {
 	// Ensure output directory exists
-	os.MkdirAll("out", os.ModePerm)
+	err := os.MkdirAll("out", os.ModePerm)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
 
 	c := Coordinator{
 		nReduce:      nReduce,
@@ -39,11 +42,21 @@ func MakeCoordinator(inputFiles []string, nReduce int) *Coordinator {
 // start a thread that listens for RPCs from main.go
 //
 func (c *Coordinator) server() {
-	rpc.Register(c)
+	err := rpc.Register(c)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
 	rpc.HandleHTTP()
 	l, e := net.Listen("tcp", ":1234")
 	if e != nil {
 		log.Fatal("listen error:", e)
 	}
-	go http.Serve(l, nil)
+
+	go func() {
+		err := http.Serve(l, nil)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+	}()
 }

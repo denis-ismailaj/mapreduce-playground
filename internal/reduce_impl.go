@@ -32,7 +32,10 @@ func RunReduce(
 			kva = append(kva, kv)
 		}
 
-		file.Close()
+		err = file.Close()
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
 	}
 
 	sort.Sort(ByKey(kva))
@@ -56,17 +59,26 @@ func RunReduce(
 		output := f(kva[i].Key, values)
 
 		// this is the correct format for each line of Reduce output.
-		fmt.Fprintf(tempFile, "%v %v\n", kva[i].Key, output)
+		_, err := fmt.Fprintf(tempFile, "%v %v\n", kva[i].Key, output)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
 
 		i = j
 	}
 
-	tempFile.Close()
+	err := tempFile.Close()
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
 
 	outputName := fmt.Sprintf("mr-out-%s.txt", job.Id)
 	outputPath := filepath.Join("out", outputName)
 
 	fmt.Printf("Outputting to file %s...\n", outputPath)
 
-	os.Rename(tempFile.Name(), outputPath)
+	err = os.Rename(tempFile.Name(), outputPath)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
 }
