@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
+	"os"
 	"sync"
 )
 
@@ -15,6 +16,9 @@ import (
 // nReduce is the number of reduce tasks to use.
 //
 func MakeCoordinator(inputFiles []string, nReduce int) *Coordinator {
+	// Ensure output directory exists
+	os.MkdirAll("out", os.ModePerm)
+
 	c := Coordinator{
 		nReduce:      nReduce,
 		mapOutputs:   map[int][]string{},

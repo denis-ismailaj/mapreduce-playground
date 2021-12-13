@@ -9,8 +9,8 @@
 
 # generate the correct output
 mrsequential indexer.so "$DATA_DIR"/pg*txt || exit 1
-sort mr-out-0 > mr-correct-indexer.txt
-rm -f mr-out*
+sort out/mr-out-0 >mr-correct-indexer.txt
+rm -f out/mr-out*
 
 echo '***' Starting indexer test.
 
@@ -21,9 +21,8 @@ sleep 1
 timeout -k 2s 180s worker indexer.so &
 timeout -k 2s 180s worker indexer.so
 
-sort mr-out* | grep . > mr-indexer-all
-if cmp mr-indexer-all mr-correct-indexer.txt
-then
+sort out/mr-out* | grep . >mr-indexer-all
+if cmp mr-indexer-all mr-correct-indexer.txt; then
   echo '---' indexer test: PASS
   exit 0
 else

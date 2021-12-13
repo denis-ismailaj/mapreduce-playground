@@ -15,7 +15,7 @@ sleep 1
 timeout -k 2s 180s worker mtiming.so &
 timeout -k 2s 180s worker mtiming.so
 
-NT=$(cat mr-out* | grep -c '^times-' | sed 's/ //g')
+NT=$(cat out/mr-out* | grep -c '^times-' | sed 's/ //g')
 if [ "$NT" != "2" ]
 then
   echo '---' saw "$NT" workers rather than 2
@@ -23,7 +23,7 @@ then
   exit 1
 fi
 
-if cat mr-out* | grep '^parallel.* 2' > /dev/null
+if cat out/mr-out* | grep '^parallel.* 2' > /dev/null
 then
   echo '---' map parallelism test: PASS
   exit 0

@@ -24,20 +24,19 @@ timeout -k 2s 180s worker early_exit.so &
 # wait for any of the coordinator or workers to exit
 # `jobs` ensures that any completed old processes from other tests
 # are not waited upon
-jobs &> /dev/null
+jobs &>/dev/null
 wait -n
 
 # a process has exited. this means that the output should be finalized
 # otherwise, either a worker or the coordinator exited early
-sort mr-out* | grep . > mr-wc-all-initial
+sort out/mr-out* | grep . >mr-wc-all-initial
 
 # wait for remaining workers and coordinator to exit.
 wait
 
 # compare initial and final outputs
-sort mr-out* | grep . > mr-wc-all-final
-if cmp mr-wc-all-final mr-wc-all-initial
-then
+sort out/mr-out* | grep . >mr-wc-all-final
+if cmp mr-wc-all-final mr-wc-all-initial; then
   echo '---' early exit test: PASS
   exit 0
 else

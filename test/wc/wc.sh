@@ -9,8 +9,8 @@
 
 # generate the correct output
 mrsequential wc.so "$DATA_DIR"/pg*txt || exit 1
-sort mr-out-0 > mr-correct-wc.txt
-rm -f mr-out*
+sort out/mr-out-0 >mr-correct-wc.txt
+rm -f out/mr-out*
 
 echo '***' Starting wc test.
 
@@ -30,9 +30,8 @@ wait $pid
 
 # since workers are required to exit when a job is completely finished,
 # and not before, that means the job has finished.
-sort mr-out* | grep . > mr-wc-all
-if cmp mr-wc-all mr-correct-wc.txt
-then
+sort out/mr-out* | grep . >mr-wc-all
+if cmp mr-wc-all mr-correct-wc.txt; then
   echo '---' wc test: PASS
   exit 0
 else

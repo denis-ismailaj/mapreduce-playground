@@ -11,10 +11,9 @@ echo '***' Starting crash test.
 
 # generate the correct output
 mrsequential nocrash.so "$DATA_DIR"/pg*txt || exit 1
-sort mr-out-0 >mr-correct-crash.txt
-rm -f mr-out*
+sort out/mr-out-0 >mr-correct-crash.txt
+rm -f out/mr-out*
 
-rm -f mr-done
 (
   timeout -k 2s 180s coordinator "$DATA_DIR"/pg*txt
   touch mr-done
@@ -48,7 +47,7 @@ done
 
 wait
 
-sort mr-out* | grep . >mr-crash-all
+sort out/mr-out* | grep . >mr-crash-all
 if cmp mr-crash-all mr-correct-crash.txt; then
   echo '---' crash test: PASS
   exit 0

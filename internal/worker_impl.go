@@ -7,6 +7,7 @@ import (
 	"log"
 	"mapreduce/pkg"
 	"os"
+	"path/filepath"
 	"sort"
 )
 
@@ -84,5 +85,5 @@ func RunReduce(
 	tempFile.Close()
 
 	outputName := fmt.Sprintf("mr-out-%s.txt", job.Id)
-	os.Rename(tempFile.Name(), outputName)
+	os.Rename(tempFile.Name(), filepath.Join("out", outputName))
 }

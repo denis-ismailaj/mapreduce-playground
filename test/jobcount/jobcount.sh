@@ -17,7 +17,7 @@ timeout -k 2s 180s worker jobcount.so
 timeout -k 2s 180s worker jobcount.so &
 timeout -k 2s 180s worker jobcount.so
 
-NT=$(cat mr-out* | awk '{print $2}')
+NT=$(cat out/mr-out* | awk '{print $2}')
 if [ "$NT" -ne "8" ]
 then
   echo '---' map jobs ran incorrect number of times "($NT != 8)"

@@ -6,6 +6,7 @@ import (
 	"hash/fnv"
 	"net/rpc"
 	"os"
+	"path/filepath"
 )
 
 //
@@ -50,7 +51,9 @@ func writeOutput(pairs []KeyValue, nReduce int, jobId string) map[int]string {
 		reduceTaskNr := getReduceTaskNr(kv.Key, nReduce)
 		filename := fmt.Sprintf("mr-%s-%d.txt", jobId, reduceTaskNr)
 
-		fo, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		filePath := filepath.Join("out", filename)
+
+		fo, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			panic(err)
 		}
@@ -63,7 +66,7 @@ func writeOutput(pairs []KeyValue, nReduce int, jobId string) map[int]string {
 			panic(err)
 		}
 
-		outputs[reduceTaskNr] = filename
+		outputs[reduceTaskNr] = filePath
 	}
 
 	return outputs

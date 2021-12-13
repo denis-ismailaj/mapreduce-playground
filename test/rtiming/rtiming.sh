@@ -15,7 +15,7 @@ sleep 1
 timeout -k 2s 180s worker rtiming.so &
 timeout -k 2s 180s worker rtiming.so
 
-NT=$(cat mr-out* | grep -c '^[a-z] 2' | sed 's/ //g')
+NT=$(cat out/mr-out* | grep -c '^[a-z] 2' | sed 's/ //g')
 if [ "$NT" -lt "2" ]
 then
   echo '---' too few parallel reduces.

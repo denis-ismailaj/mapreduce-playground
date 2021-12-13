@@ -6,7 +6,10 @@ package main
 // go run mrsequential.go wc.so pg*.txt
 //
 
-import "fmt"
+import (
+	"fmt"
+	"path/filepath"
+)
 import "mapreduce/internal"
 import "os"
 import "log"
@@ -18,6 +21,9 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Usage: mrsequential xxx.so inputfiles...\n")
 		os.Exit(1)
 	}
+
+	// Ensure output directory exists
+	os.MkdirAll("out", os.ModePerm)
 
 	mapf, reducef := internal.LoadPlugin(os.Args[1])
 
@@ -50,7 +56,7 @@ func main() {
 	sort.Sort(internal.ByKey(intermediate))
 
 	oname := "mr-out-0"
-	ofile, _ := os.Create(oname)
+	ofile, _ := os.Create(filepath.Join("out", oname))
 
 	//
 	// call Reduce on each distinct key in intermediate[],
