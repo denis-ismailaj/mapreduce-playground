@@ -11,27 +11,6 @@ import (
 	"sort"
 )
 
-func RunMap(
-	f func(string, string) []KeyValue,
-	job pkg.Job,
-) []KeyValue {
-	// for map there's only one input
-	filename := job.Inputs[0]
-
-	file, err := os.Open(filename)
-	if err != nil {
-		log.Fatalf("cannot open %v", filename)
-	}
-	content, err := ioutil.ReadAll(file)
-	if err != nil {
-		log.Fatalf("cannot read %v", filename)
-	}
-	file.Close()
-	kva := f(filename, string(content))
-
-	return kva
-}
-
 func RunReduce(
 	f func(string, []string) string,
 	job pkg.Job,
@@ -58,7 +37,7 @@ func RunReduce(
 
 	sort.Sort(ByKey(kva))
 
-	tempFile, _ := ioutil.TempFile("", "temp")
+	tempFile, _ := ioutil.TempFile("out/tmp", "temp")
 
 	//
 	// call Reduce on each distinct key in intermediate[],
@@ -85,5 +64,9 @@ func RunReduce(
 	tempFile.Close()
 
 	outputName := fmt.Sprintf("mr-out-%s.txt", job.Id)
-	os.Rename(tempFile.Name(), filepath.Join("out", outputName))
+	outputPath := filepath.Join("out", outputName)
+
+	fmt.Printf("Outputting to file %s...\n", outputPath)
+
+	os.Rename(tempFile.Name(), outputPath)
 }

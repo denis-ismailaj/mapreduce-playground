@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"log"
 	"mapreduce/api"
 	"mapreduce/pkg"
 	"time"
@@ -16,6 +17,7 @@ func (c *Coordinator) HandleJobRequest(args *api.JobRequestArgs, reply *api.JobR
 	defer c.mu.Unlock()
 
 	// Try to find an unprocessed or stale job to assign to the worker
+	// TODO Optimize by giving priority to unprocessed jobs first, as stale ones may actually finish later.
 	for id, job := range c.jobs {
 		if job.Status == pkg.Unprocessed || job.IsStale() {
 			c.jobs[id].Status = pkg.Processing
@@ -45,6 +47,7 @@ func (c *Coordinator) HandleJobFinish(args *api.JobFinishArgs, reply *api.JobFin
 
 	// Dismiss results if the job has already been completed by another worker
 	if c.jobs[args.Job.Id].Status == pkg.Done {
+		log.Printf("Ignoring results from job %s, which is already done.", args.Job.Id)
 		return nil
 	}
 

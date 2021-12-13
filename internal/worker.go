@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"fmt"
+	"log"
 	"mapreduce/pkg"
 	"os"
 	"reflect"
@@ -22,6 +24,7 @@ func Worker(
 
 	// Exit if there are no more jobs left
 	if reflect.ValueOf(job).IsZero() {
+		fmt.Println("No more jobs to do. Exiting...")
 		os.Exit(0)
 	}
 
@@ -29,18 +32,19 @@ func Worker(
 	case pkg.Wait:
 		// No available jobs at the moment
 		// Wait a bit before checking again
+		log.Println("No jobs available. Retrying...")
 		time.Sleep(1 * time.Second)
 	case pkg.Map:
-		// Run Map and get the key value pairs
-		kva := RunMap(mapFun, job)
+		log.Printf("Got assigned Map job with id %s.", job.Id)
 
-		// Partition and write Map output to nReduce files
-		// TODO Don't overwrite finished map outputs
-		outputs := writeOutput(kva, nReduce, job.Id)
+		// Run Map and get the output files back
+		outputs := RunMap(mapFun, job, nReduce)
 
 		// Report back to coordinator with the finished output files
 		JobFinishCall(job, outputs)
 	case pkg.Reduce:
+		log.Printf("Got assigned Reduce job with id %s.", job.Id)
+
 		// Run Reduce function and output final files
 		RunReduce(reduceFun, job)
 

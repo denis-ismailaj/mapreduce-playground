@@ -1,12 +1,9 @@
 package internal
 
 import (
-	"encoding/json"
 	"fmt"
 	"hash/fnv"
 	"net/rpc"
-	"os"
-	"path/filepath"
 )
 
 //
@@ -41,35 +38,6 @@ func ihash(key string) int {
 //
 func getReduceTaskNr(key string, nReduce int) int {
 	return ihash(key) % nReduce
-}
-
-func writeOutput(pairs []KeyValue, nReduce int, jobId string) map[int]string {
-	var outputs = map[int]string{}
-
-	for _, kv := range pairs {
-
-		reduceTaskNr := getReduceTaskNr(kv.Key, nReduce)
-		filename := fmt.Sprintf("mr-%s-%d.txt", jobId, reduceTaskNr)
-
-		filePath := filepath.Join("out", filename)
-
-		fo, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			panic(err)
-		}
-
-		enc := json.NewEncoder(fo)
-
-		enc.Encode(&kv)
-
-		if err := fo.Close(); err != nil {
-			panic(err)
-		}
-
-		outputs[reduceTaskNr] = filePath
-	}
-
-	return outputs
 }
 
 // for sorting by key.

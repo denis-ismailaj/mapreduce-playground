@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"log"
 	"mapreduce/pkg"
 	"strconv"
 	"time"
@@ -14,6 +15,8 @@ func (c *Coordinator) jobCreator(inputFiles []string) {
 		for c.areCurrentJobsFinished() {
 			switch c.currentStage {
 			case Start:
+				log.Println("Starting Map stage...")
+
 				// Create a Map job for each of the input files
 				for _, file := range inputFiles {
 					id := strconv.Itoa(ihash(file))
@@ -31,6 +34,8 @@ func (c *Coordinator) jobCreator(inputFiles []string) {
 
 				c.currentStage = Map
 			case Map:
+				log.Println("Starting Reduce stage...")
+
 				// Create nReduce Reduce jobs
 				for i := 0; i < c.nReduce; i++ {
 					id := fmt.Sprintf("r-%d", i)
@@ -48,6 +53,8 @@ func (c *Coordinator) jobCreator(inputFiles []string) {
 
 				c.currentStage = Reduce
 			case Reduce:
+				log.Println("Finished!")
+
 				// All stages are completed
 				c.currentStage = Finished
 				c.mu.Unlock()

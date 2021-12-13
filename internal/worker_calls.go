@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"log"
 	"mapreduce/api"
 	"mapreduce/pkg"
 )
@@ -26,6 +27,8 @@ func JobRequestCall() (pkg.Job, int) {
 // the RPC argument and reply types are defined in rpc.go.
 //
 func JobFinishCall(job pkg.Job, outputs map[int]string) {
+	log.Printf("Finished job %s.", job.Id)
+
 	// declare an argument structure.
 	args := api.JobFinishArgs{Outputs: outputs, Job: job}
 
