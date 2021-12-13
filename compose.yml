@@ -1,0 +1,21 @@
+version: '3'
+services:
+  coordinator:
+    build: .
+    command: [ "/start_coordinator.sh" ]
+    volumes:
+      - ./test/testdata:/app/inputs:ro
+    network_mode: host
+  worker:
+    depends_on:
+      - coordinator
+    build: .
+    command: [ "/worker", '/app/plugin.so' ]
+    volumes:
+      - ./test/testdata:/app/inputs:ro
+      - ./out:/out
+      - type: bind
+        source: ./plugin.so
+        target: /app/plugin.so
+        read_only: true
+    network_mode: host
