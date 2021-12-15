@@ -6,10 +6,9 @@ services:
     volumes:
       - ./test/testdata:/app/inputs:ro
     environment:
-      - COORDINATOR_PORT
-      - N_REDUCE
-      - WORKER_TIMEOUT
-    network_mode: host
+      - COORDINATOR_PORT=1234
+      - N_REDUCE=10
+      - WORKER_TIMEOUT=10
   worker:
     depends_on:
       - coordinator
@@ -18,11 +17,7 @@ services:
     volumes:
       - ./test/testdata:/app/inputs:ro
       - ./out:/out
-      - type: bind
-        source: ./plugin.so
-        target: /app/plugin.so
-        read_only: true
+      - ./plugin.so:/app/plugin.so:ro
     environment:
-      - COORDINATOR_HOST
-      - COORDINATOR_PORT
-    network_mode: host
+      - COORDINATOR_HOST=coordinator
+      - COORDINATOR_PORT=1234
