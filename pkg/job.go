@@ -26,12 +26,12 @@ type Job struct {
 	Type             JobType
 }
 
-func (job Job) IsStale() bool {
+func (job Job) IsRunningForMoreThan(seconds int) bool {
 	if job.Status != Processing {
 		return false
 	}
 
-	maxAge := time.Now().Add(-10 * time.Second)
+	maxAge := time.Now().Add(time.Duration(-seconds) * time.Second)
 
 	return job.LastStatusUpdate.Before(maxAge)
 }

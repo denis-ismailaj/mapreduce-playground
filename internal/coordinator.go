@@ -19,7 +19,7 @@ func (c *Coordinator) HandleJobRequest(args *api.JobRequestArgs, reply *api.JobR
 	// Try to find an unprocessed or stale job to assign to the worker
 	// TODO Optimize by giving priority to unprocessed jobs first, as stale ones may actually finish later.
 	for id, job := range c.jobs {
-		if job.Status == pkg.Unprocessed || job.IsStale() {
+		if job.Status == pkg.Unprocessed || job.IsRunningForMoreThan(c.workerTimeout) {
 			c.jobs[id].Status = pkg.Processing
 			c.jobs[id].LastStatusUpdate = time.Now()
 

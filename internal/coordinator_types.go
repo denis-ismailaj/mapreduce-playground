@@ -6,12 +6,13 @@ import (
 )
 
 type Coordinator struct {
-	nReduce      int
-	jobs         map[string]*pkg.Job
-	mapOutputs   map[int][]string
-	currentStage Stage
-	mu           *sync.Mutex
-	cond         *sync.Cond
+	nReduce       int
+	workerTimeout int
+	jobs          map[string]*pkg.Job
+	mapOutputs    map[int][]string
+	currentStage  Stage
+	mu            *sync.Mutex
+	cond          *sync.Cond
 }
 
 type Stage int64

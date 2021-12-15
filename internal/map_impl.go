@@ -47,8 +47,9 @@ func writeOutput(pairs []KeyValue, nReduce int, jobId string) map[int]string {
 	}
 
 	// Create temporary files for each bucket
-	for i := 1; i <= nReduce; i++ {
-		tempFile, err := ioutil.TempFile("/out/tmp", "intermediate")
+	for i := 0; i < nReduce; i++ {
+		tempFile, err := ioutil.TempFile("out/tmp", "intermediate")
+
 		if err != nil {
 			log.Fatalf(err.Error())
 		}

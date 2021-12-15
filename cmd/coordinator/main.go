@@ -9,10 +9,15 @@ package main
 // Please do not change this file.
 //
 
-import "mapreduce/internal"
-import "time"
-import "os"
-import "fmt"
+import (
+	"fmt"
+	"github.com/joho/godotenv"
+	"log"
+	"mapreduce/internal"
+	"os"
+	"strconv"
+	"time"
+)
 
 func main() {
 	if len(os.Args) < 2 {
@@ -20,7 +25,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	m := internal.MakeCoordinator(os.Args[1:], 10)
+	// Try to load from .env file. Otherwise, assume variables are loaded.
+	err := godotenv.Load()
+	if err == nil {
+		log.Println("Loaded environment variables from .env.")
+	}
+
+	nReduce, err := strconv.Atoi(os.Getenv("N_REDUCE"))
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "N_REDUCE environment variable not found or invalid.\n")
+		os.Exit(1)
+	}
+
+	m := internal.MakeCoordinator(os.Args[1:], nReduce)
 	for m.Done() == false {
 		time.Sleep(time.Second)
 	}

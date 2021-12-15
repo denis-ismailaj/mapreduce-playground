@@ -5,6 +5,7 @@ import (
 	"hash/fnv"
 	"log"
 	"net/rpc"
+	"os"
 )
 
 //
@@ -13,7 +14,11 @@ import (
 // returns false if something goes wrong.
 //
 func call(rpcName string, args interface{}, reply interface{}) bool {
-	c, err := rpc.DialHTTP("tcp", "127.0.0.1"+":1234")
+	coordinatorHost := os.Getenv("COORDINATOR_HOST")
+	coordinatorPort := os.Getenv("COORDINATOR_PORT")
+	coordinatorAddress := fmt.Sprintf("%s:%s", coordinatorHost, coordinatorPort)
+
+	c, err := rpc.DialHTTP("tcp", coordinatorAddress)
 	if err != nil {
 		return true
 	}

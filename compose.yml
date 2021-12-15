@@ -5,6 +5,10 @@ services:
     command: [ "/start_coordinator.sh" ]
     volumes:
       - ./test/testdata:/app/inputs:ro
+    environment:
+      - COORDINATOR_PORT
+      - N_REDUCE
+      - WORKER_TIMEOUT
     network_mode: host
   worker:
     depends_on:
@@ -18,4 +22,7 @@ services:
         source: ./plugin.so
         target: /app/plugin.so
         read_only: true
+    environment:
+      - COORDINATOR_HOST
+      - COORDINATOR_PORT
     network_mode: host

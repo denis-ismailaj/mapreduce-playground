@@ -1,12 +1,14 @@
 package internal
 
 import (
+	"fmt"
 	"log"
 	"mapreduce/pkg"
 	"net"
 	"net/http"
 	"net/rpc"
 	"os"
+	"strconv"
 	"sync"
 )
 
@@ -16,18 +18,19 @@ import (
 // nReduce is the number of reduce tasks to use.
 //
 func MakeCoordinator(inputFiles []string, nReduce int) *Coordinator {
-	// Ensure output directory exists
-	err := os.MkdirAll("out", os.ModePerm)
+	workerTimeout, err := strconv.Atoi(os.Getenv("WORKER_TIMEOUT"))
 	if err != nil {
-		log.Fatalf(err.Error())
+		_, _ = fmt.Fprintf(os.Stderr, "WORKER_TIMEOUT environment variable not found or invalid.\n")
+		os.Exit(1)
 	}
 
 	c := Coordinator{
-		nReduce:      nReduce,
-		mapOutputs:   map[int][]string{},
-		currentStage: Start,
-		jobs:         map[string]*pkg.Job{},
-		mu:           &sync.Mutex{},
+		nReduce:       nReduce,
+		workerTimeout: workerTimeout,
+		mapOutputs:    map[int][]string{},
+		currentStage:  Start,
+		jobs:          map[string]*pkg.Job{},
+		mu:            &sync.Mutex{},
 	}
 	c.cond = sync.NewCond(c.mu)
 
@@ -48,7 +51,9 @@ func (c *Coordinator) server() {
 	}
 
 	rpc.HandleHTTP()
-	l, e := net.Listen("tcp", ":1234")
+
+	port := os.Getenv("COORDINATOR_PORT")
+	l, e := net.Listen("tcp", ":"+port)
 	if e != nil {
 		log.Fatal("listen error:", e)
 	}
